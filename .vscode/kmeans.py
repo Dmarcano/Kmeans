@@ -17,24 +17,49 @@ import random as rnd
 import matplotlib.pyplot as plt 
 
 class KCluster(object):
-    def __init__(self, vector):
+    """
+        Class that represents a single K means cluster grouping.
+        Keeps track of:
+            1. the clusters representative vector
+            2. Its own vectors that belong to the cluster
+            3. the grouping color vector
+            4. The j_clust value 
+    """
+    def __init__(self, vector, Jclust = np.inf):
         self.rep_vector = vector # representative vector of vector cluster
         self.vec_list = [] # list of vector indices that map to ith vector that belongs to cluster
         self.colorVec = [] # color
-        self.Jclust = np.inf
+        self.Jclust = Jclust
         self.Jclust_prev = 0
         self.c_vector = None
+        self.optimized = False
 
     def clear_vec_list(self):
         self.vec_list = []
 
     def update_j_cluster(self):
-        pass 
+    """
+        Method that updates the J_cluster values 
+    """ 
+        self.Jclust_prev = self.Jclust
+
+        # now update the J_cluster value
+
+    def update_rep_vectors(self):
+        pass
+
+
+
+    def __repr__(self):
+        return "K cluster:'rep vec: {}".format(str(self.rep_vector))
+
+    def __str__(self):
+        return "K Cluster: Rep vector: {}".format(str(self.rep_vector))
 
     
 
 
-def k_means(k, vec_list, iterations = None ):
+def k_means(k, vec_list ):
     """
         K means algorithm. Given k clusters and a list of n vectors 
 
@@ -60,10 +85,12 @@ def k_means(k, vec_list, iterations = None ):
     """
     # initialize k vectors
     kcluster_lists = choose_init_rep(k, vec_list)
-
     running = True
 
-    while running:
+    if iterations != 0:
+        running = False
+
+    while running or iterations > 0:
         # iterate 
         update_vector_groups( vec_list, kcluster_lists)
 
@@ -85,27 +112,44 @@ def k_means(k, vec_list, iterations = None ):
     #             min_dist = dist if dist < min_dist else min_dist
 
 
-        
+def choose_first_z(k, vec_list):
 
-def choose_init_rep(k, vec_list):
-    rep_vectors = [] # list to keep track of vectors used
-
+    """
+        function which 
+    """
+   
     k_cluster_vectors = [] # list of KCluster objects to return
 
-    # choose random vectors from given list of vectors as rep vectors
-    while len(rep_vectors) is not k:
-        vec_choice = rnd.choice(vec_list)
-        if vec_choice not in rep_vectors:
-            rep_vectors.append(vec_choice)
-            k_cluster_vectors.append(KCluster(vec_choice))
+    for i in range(k):
+        vec_choice = vec_list[i]
+       
+        k_cluster_vectors.append(KCluster(vec_choice))
 
     return k_cluster_vectors
-
     
 
-def update_vector_groups(vec_list, cluster_list):
-    #update the group of vectors given a list of vectors and k vectors
+def update_vector_groups(vec_list, cluster_list, c_arr):
+    """
+        function that updates the groupings of a list/array of n-dimensional 
+        numpy vectors and assigns them to their closest representative vector 
+        given a list/array of k_cluster objects
 
+        input:
+            1. list/numpy_arr of n-dimensional numpy vectors
+            2. list/numpy_arr of KCluster Objects
+            3. list/numpy_arr of integer who's indeces
+            correspond to the indeces of the first vector list and whos
+            value corresponds to which KCluster they belong to.
+
+        output:
+            1. the c_arr will be mutated so that it's values correspond to 
+            the closest kCluster
+            2. each individual KCluster will have its member vector list mutated with the vectors
+            closest to the representative vector 
+    """
+
+    
+    # clear all the kcluster lists
     for kcluster in cluster_list:
         kcluster.clear_vec_list()
 
@@ -141,7 +185,7 @@ def update_rep_vectors(vec_list, k_cluster_list):
     for k_cluster in k_cluster_list:
 
         average_vec = np.mean(k_cluster.vec_list, axis = 0)
-        print(average_vec)
+        #print(average_vec)
         k_cluster.rep_vector = average_vec
 
 
@@ -154,8 +198,83 @@ def update_rep_vectors(vec_list, k_cluster_list):
 #%%
 
 def initialization_test():
-    pass 
+    """
+        Test on choosing the first z vectors.
+         (testing choose_init_rep() )
+    """
+    k = 3
+    vec_list = []
+    for i in range(20):
+        vec_list.append(np.array( [i, i + 1] ))
+
+    vec_list = np.array(vec_list)
+    
+    for i in range(2):
+        
+        k_init_vecs = choose_first_z(k, vec_list)
+        print(k_init_vecs)
+
+     
+
+def update_vector_groups_test():
+    k = 2
+
+    vec_list = []
+
+    for i in range(10):
+        vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
+        np_vec = np.array( vec  ) # vectorize the vectors
+        vec_list.append(np_vec)
 
 
-def update_vector_groups():
+    k_clusters = choose_first_z(k, vec_list) # get the kclusters
+
+    update_vector_groups(vec_list, k_clusters)
+
+
+    for idx, k_cluster in enumerate(k_clusters):
+        print("==========. k-cluster: {} ==========".format(idx))
+        
+        for cluster_vec in k_cluster.vec_list:
+            print(cluster_vec)
+        print()
+
+
+def kmeans_test():
+    k = 2
+    vec_list = []
+
+    for i in range(10):
+        vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
+        np_vec = np.array(vec) # vectorize the vectors
+        vec_list.append(np_vec)
+
+    vec_list = np.array(vec_list)
+
+
+    k_clusters = choose_first_z(k, vec_list) # get the kclusters
+
+    update_vector_groups(vec_list, k_clusters) # creates two k clusters
+
+    print(" ================ BEFORE ================ ")
+
+    for cluster in k_clusters:
+        print(cluster)
+
+    update_rep_vectors(vec_list, k_clusters) # update rep vectors
+    print(" ================ AFTER ================ ")
+
+    for cluster in k_clusters:
+        print(cluster)
+
+kmeans_test()
+
+
+
+
+
+
+#%%
+
+def main():
     pass 
