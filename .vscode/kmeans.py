@@ -1,5 +1,5 @@
 #%% [markdown]
-## K nearest neighbors algorithm
+## K means algorithm
 # The following code implements the k-means algorithm
 #  for a set of given n-vectors belonging to the kth cluster denoted by x_i,
 #         we try to find some representative z vectors z_k such that 
@@ -25,25 +25,31 @@ class KCluster(object):
             3. the grouping color vector
             4. The j_clust value 
     """
-    def __init__(self, vector, Jclust = np.inf):
+    
+    def __init__(self, vector, Jclust = 0):
         self.rep_vector = vector # representative vector of vector cluster
         self.vec_list = [] # list of vector indices that map to ith vector that belongs to cluster
         self.colorVec = [] # color
         self.Jclust = Jclust
-        self.Jclust_prev = 0
-        self.c_vector = None
-        self.optimized = False
+        self.converged = False
+        
 
     def clear_vec_list(self):
         self.vec_list = []
 
     def update_j_cluster(self):
-    """
-        Method that updates the J_cluster values 
-    """ 
-        self.Jclust_prev = self.Jclust
+        """
+            Method that updates the J_cluster values 
+        """ 
+        # now update the J_cluster value by finding the sum 
 
-        # now update the J_cluster value
+        # take the mean square distance of all the vectors belonging to the k_cluster
+        # take (norm( vector- rep vector)  ^ 2) 
+
+        Jclust = 0
+
+       
+        pass 
 
     def update_rep_vectors(self):
         pass
@@ -59,57 +65,68 @@ class KCluster(object):
     
 
 
-def k_means(k, vec_list ):
+def k_means(k, vec_list, k_clusters = None ):
     """
         K means algorithm. Given k clusters and a list of n vectors 
 
+        input:
+            1. k - int for number of clusters
+            2. vec_list - list/array of N vectors to classify under a cluster
+            3. k_cluster [optional] - list/arr of k_cluster objects. defaults to first k 
+            vectors to use for the k_clusters grouping
+
         output:
-            list of length k of the representative vectors for each cluster
+            1. list of length k of the representative vectors for each cluster
+            2. c_arr of length N that classify each vector in vec_list to each cluster
+            3. J cluster value for the iteration
     """
 
-    """
-        ========================= IMPLEMENTATION ==========================
+    vec_list_len = len(vec_list)
+    c_arr = np.zeros(vec_list_len)
 
-        for a set of given n-vectors belonging to the kth cluster denoted by x_i,
-        we try to find some representative z vectors z_k such that 
+    if k_clusters == None:
+        # initialize k_clusters
+        k_cluster_list = choose_first_z(k, vec_list)
+    else:
+        k_cluster_list = k_clusters
 
-        J_cluster_distance is as small as can be
+    # associates vec_list vectors with specific cluster
+    update_vector_groups(vec_list, k_cluster_list, c_arr) 
+    update_rep_vectors(vec_list, k_cluster_list)
 
-        for each vector x_i inside the cluster with representative vector z_k:
-            J_cluster_distance += 
-            
-        J_cluster_distance = J_cluster_distance / len(# vectors in k)
+    # get the j_cluster
+    J_cluster = calculate_Jcluster(k_cluster_list, vec_list)
+
+    rep_vectors = []
+
+    for k_cluster in k_cluster_list:
+
+        rep_vec = k_cluster.rep_vector
+        rep_vectors.append(rep_vec)
+    
+    return rep_vectors, c_arr, J_cluster
+
+def calculate_Jcluster(k_cluster_list, vec_list):
+    
+    J_clust = 0
+    N = len(vec_list)
+
+    for k_cluster in k_cluster_list:
+        #for each k_cluster find the individual cluster value J_i
+
+        J_clust_indv = 0 # individual j cluster value
+        for vector in k_cluster.vec_list:
+            # for each vector in our list of vector take the norm squared and add it 
+            # to the individual j cluster value
+            norm_squared = np.linalg.norm(vector - k_cluster.rep_vector) ** 2
+            J_clust_indv += norm_squared
         
-        for each iteration:
-            partition each vector to each group. aka find the 
-    """
-    # initialize k vectors
-    kcluster_lists = choose_init_rep(k, vec_list)
-    running = True
+        #divide J_i by N
+        J_clust_indv /= N
+        # add each individual J_i to the total J_cluster
+        J_clust += J_clust_indv
 
-    if iterations != 0:
-        running = False
-
-    while running or iterations > 0:
-        # iterate 
-        update_vector_groups( vec_list, kcluster_lists)
-
-
-    # keep track of variable J_clust and J_clust previous
-    # J_clust_previous = 1
-    # J_clust_curr = 0
-    # keep iterating until J_clust == J_clust_previous:
-    # while J_clust_previous is not J_clust_curr:
-
-    #     # partition each vector in vec list  into the k group
-    #     for vector in vec_list:
-    #         # initialize min distance
-    #         min_dist = np.abs(np.linalg.norm( vector, rep_vectors[0]))
-
-    #         for rep_vector in rep_vectors:
-
-    #             dist = np.abs(np.linalg.norm(vector, vec_list))
-    #             min_dist = dist if dist < min_dist else min_dist
+    return J_clust
 
 
 def choose_first_z(k, vec_list):
@@ -154,20 +171,24 @@ def update_vector_groups(vec_list, cluster_list, c_arr):
         kcluster.clear_vec_list()
 
     for idx, vector in enumerate(vec_list):
-        # find the minimum 
+        # find the minimum distance between one vector and all the rep_vectors
         min_dist = np.inf
         min_k_cluster = cluster_list[0]
+        min_k_idx = 0
         
 
-        for kcluster in cluster_list:
+        for k_idx, kcluster in enumerate(cluster_list):
             dist =  np.linalg.norm( vector- kcluster.rep_vector ) # distance of np abs
             
             if dist < min_dist:
                 min_k_cluster = kcluster
                 min_dist = dist
-        # now that we have reference to k_cluster that has minimum distance to current vector
-        # add the idx to the current vector to the list of associated vectors to it
-        # min_k_cluster.vec_list.append(idx)
+                min_k_idx = k_idx
+        # now that we have reference to k_cluster that has minimum distance 
+        # to current vector, we associate the vector the the kcluster and update the c_arr
+        # assignment 
+        
+        c_arr[idx] = min_k_idx
         min_k_cluster.vec_list.append(vector)
 
     return 
@@ -197,10 +218,16 @@ def update_rep_vectors(vec_list, k_cluster_list):
 
 #%%
 
+# K means unit testing. No rigorous testing just incremental tests with exprected Input
+# Outputs
+
 def initialization_test():
     """
         Test on choosing the first z vectors.
          (testing choose_init_rep() )
+
+         Print some i vectors to see that the initialization method does indeed
+         choose the first k vectors as initialization z vectors
     """
     k = 3
     vec_list = []
@@ -208,28 +235,37 @@ def initialization_test():
         vec_list.append(np.array( [i, i + 1] ))
 
     vec_list = np.array(vec_list)
-    
+    print(vec_list)
+
     for i in range(2):
         
         k_init_vecs = choose_first_z(k, vec_list)
         print(k_init_vecs)
-
-     
+    
 
 def update_vector_groups_test():
-    k = 2
+    """
+        Updating the vector  groups test
+        Create a set of vectors in 2-D space with one set around Q1 and 
+        other in Q4
+    """
+
+    k = 2 # two k groups
 
     vec_list = []
 
+    c_arr = np.zeros(10)
+
     for i in range(10):
-        vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
+        # all odd vectors are in q4 and all even vectors are in q1
+        vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] 
         np_vec = np.array( vec  ) # vectorize the vectors
         vec_list.append(np_vec)
 
 
     k_clusters = choose_first_z(k, vec_list) # get the kclusters
 
-    update_vector_groups(vec_list, k_clusters)
+    update_vector_groups(vec_list, k_clusters, c_arr)
 
 
     for idx, k_cluster in enumerate(k_clusters):
@@ -239,10 +275,18 @@ def update_vector_groups_test():
             print(cluster_vec)
         print()
 
+    print(c_arr)
 
-def kmeans_test():
+def kmeans_test_parts():
+
+    """
+        test that tests a full hard coded k means run using all the parts for k means
+    """
+    
     k = 2
     vec_list = []
+
+    c_arr = np.zeros(10)
 
     for i in range(10):
         vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
@@ -254,7 +298,7 @@ def kmeans_test():
 
     k_clusters = choose_first_z(k, vec_list) # get the kclusters
 
-    update_vector_groups(vec_list, k_clusters) # creates two k clusters
+    update_vector_groups(vec_list, k_clusters, c_arr) # creates two k clusters
 
     print(" ================ BEFORE ================ ")
 
@@ -267,11 +311,21 @@ def kmeans_test():
     for cluster in k_clusters:
         print(cluster)
 
-kmeans_test()
+def k_means_1iter():
+    """
+        Creating sample 2-D data and calling a k means algorithm for one iteration
 
+        Testing that we get results we expect
+    """
 
+     for i in range(10):
+        vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
+        np_vec = np.array(vec) # vectorize the vectors
+        vec_list.append(np_vec)
 
+    k = 2
 
+    rep_vectors, c_arr, J_clust = k_means(k, vec_list)
 
 
 #%%
