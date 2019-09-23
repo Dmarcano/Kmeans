@@ -11,10 +11,14 @@
             
 
 #         J_cluster_distance = J_cluster_distance / len(# vectors in k)
-#%%
+#%% 
+# =============================== K MEANS ALGORITHM LIBRARY CODE =============================
 import numpy as np
 import random as rnd 
 import matplotlib.pyplot as plt 
+import matplotlib.cm as mplcm
+import matplotlib.colors as colors
+
 
 class KCluster(object):
     """
@@ -36,25 +40,6 @@ class KCluster(object):
 
     def clear_vec_list(self):
         self.vec_list = []
-
-    def update_j_cluster(self):
-        """
-            Method that updates the J_cluster values 
-        """ 
-        # now update the J_cluster value by finding the sum 
-
-        # take the mean square distance of all the vectors belonging to the k_cluster
-        # take (norm( vector- rep vector)  ^ 2) 
-
-        Jclust = 0
-
-       
-        pass 
-
-    def update_rep_vectors(self):
-        pass
-
-
 
     def __repr__(self):
         return "K cluster:'rep vec: {}".format(str(self.rep_vector))
@@ -132,7 +117,17 @@ def calculate_Jcluster(k_cluster_list, vec_list):
 def choose_first_z(k, vec_list):
 
     """
-        function which 
+        function to find initial k vectors which chooses the first k vectors in a given
+        list as the initialization vectors for k means.
+
+        input:
+            k - number of clusters
+            vec_list - list/array of N-dimensional numpy vectors
+
+        output:
+            list of KCluster Objects with their representative vectors 
+
+        
     """
    
     k_cluster_vectors = [] # list of KCluster objects to return
@@ -217,6 +212,7 @@ def update_rep_vectors(vec_list, k_cluster_list):
 
 
 #%%
+# =============================== K MEANS ALGORITHM UNIT TESTING =============================
 
 # K means unit testing. No rigorous testing just incremental tests with exprected Input
 # Outputs
@@ -311,24 +307,69 @@ def kmeans_test_parts():
     for cluster in k_clusters:
         print(cluster)
 
-def k_means_1iter():
+def k_means_1_iter_test():
     """
         Creating sample 2-D data and calling a k means algorithm for one iteration
 
         Testing that we get results we expect
     """
+    k = 2
+    vec_list = []
 
-     for i in range(10):
+    for i in range(10):
         vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
         np_vec = np.array(vec) # vectorize the vectors
         vec_list.append(np_vec)
 
-    k = 2
 
     rep_vectors, c_arr, J_clust = k_means(k, vec_list)
 
 
-#%%
+    visalize_kmeans(vec_list, 0, 1, k, c_arr)
+    # print("===================== REP VECTORS =====================")
+    # print(rep_vectors)
+    # print()
+    # print("===================== C ARRAY =====================")
+    # print(c_arr)
+    # print()
+    # print("===================== J CLUST =====================")
+    # print(J_clust)
+    # print()
 
-def main():
-    pass 
+
+k_means_1_iter_test()
+
+
+#%%
+# =============================== K MEANS VISUALIZATION =============================
+
+def visalize_kmeans(vec_list, x_dim, y_dim, k, cluster_assignments ):
+    """
+        Function that visualizes a projection of the outputs of a kmeans algorithm 
+        across two specified dimensions
+
+        inputs: 
+            1. vec_list - list/array of N-dimensional vectors
+            2. x_dim - vector dimension to use for x-axis
+            3. y_dim - vector dimension to use for the y-axis
+            4. k - number of clusters in the group
+            5. cluster_assignments - vector whose indices correspond 
+            to the indices of vec_list
+    """
+    # use map to map lambda that returns the [ith] element of a vector
+    # to get the dimension vectors
+    x_vals = list( map(lambda num: num[x_dim], vec_list) ) 
+    y_vals = list( map( lambda num: num[y_dim], vec_list) )  
+
+
+
+    # start by assigning k types of colors.
+    color_map = plt.get_cmap("gist_rainbow")
+    cNorm  = colors.Normalize(vmin=0, vmax=k-1)
+    scalarMap = mplcm.ScalarMappable(norm=cNorm, cmap=cm)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+
+
+#%%
