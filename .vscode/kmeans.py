@@ -416,8 +416,8 @@ def k_means_1_iter_test():
 
 
 
-#%%
-
+#%%[markdown]
+## ========== K-Means Sample data =============
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -449,10 +449,11 @@ def k_means_10_iter_test():
 
 
 def k_means_10_iters_anim():
-    vec_list, vec_labels = make_blobs(n_samples= 100, centers=2, n_features=2, random_state=0) 
-    k = 5
+    vec_list, vec_labels = make_blobs(n_samples= 300, centers=3, n_features=2, random_state=0) 
+    k = 3
     J_clust_list = []
     images_arr = []
+    J_clust_prev = 0
 
     rep_vectors, c_arr, J_clust = k_means(k, vec_list)
 
@@ -461,13 +462,28 @@ def k_means_10_iters_anim():
 
     J_clust_list.append(J_clust)
 
-    for i in range(10):
+    for i in range(20):
+        J_clust_prev = J_clust # set previous cluster val to current
+
         k_cluster_list = create_k_clusters(rep_vectors)
         rep_vectors, c_arr, J_clust = k_means(k, vec_list, k_clusters=k_cluster_list)
         img = kmeans_image_arr(vec_list, 0, 1, k, c_arr)
         images_arr.append(img)
 
+        if J_clust_prev == J_clust:
+            # if both clusters are the same
+            print("local critical point found!")
+            break;
+
     image_arr_to_gif(images_arr)
+
+    print(" ======================= MY K MEANS CLUSTER ============ ")
+    plt.figure()
+    visalize_kmeans(vec_list, 0, 1, k, c_arr)
+
+    print(" ======================= ACTUAL CLUSTER ============ ")
+    plt.figure()
+    visalize_kmeans(vec_list, 0, 1, k, vec_labels)
 
 
 
