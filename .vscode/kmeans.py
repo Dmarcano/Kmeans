@@ -18,7 +18,9 @@ import random as rnd
 import matplotlib.pyplot as plt 
 import matplotlib.cm as mplcm
 import matplotlib.colors as colors
-
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+import imageio
 
 class KCluster(object):
     """
@@ -30,11 +32,10 @@ class KCluster(object):
             4. The j_clust value 
     """
     
-    def __init__(self, vector, Jclust = 0):
+    def __init__(self, vector):
         self.rep_vector = vector # representative vector of vector cluster
         self.vec_list = [] # list of vector indices that map to ith vector that belongs to cluster
         self.colorVec = [] # color
-        self.Jclust = Jclust
         self.converged = False
         
 
@@ -211,6 +212,75 @@ def update_rep_vectors(vec_list, k_cluster_list):
 
 
 
+def create_k_clusters(z_vecs):
+    """
+        function that returns a list of 
+    """
+    k_cluster_list = [KCluster(vector) for vector in z_vecs ]
+
+    return k_cluster_list
+
+
+#%%
+# =============================== K MEANS VISUALIZATION =============================
+
+def visalize_kmeans(vec_list, x_dim, y_dim, k, cluster_assignments ):
+    """
+        Function that visualizes a projection of the outputs of a kmeans algorithm 
+        across two specified dimensions
+
+        inputs: 
+            1. vec_list - list/array of N-dimensional vectors
+            2. x_dim - vector dimension to use for x-axis
+            3. y_dim - vector dimension to use for the y-axis
+            4. k - number of clusters in the group
+            5. cluster_assignments - vector whose indices correspond 
+            to the indices of vec_list
+    """
+    # use map to map lambda that returns the [ith] element of a vector
+    # to get the dimension vectors
+    x_vals = list( map(lambda num: num[x_dim], vec_list) ) 
+    y_vals = list( map( lambda num: num[y_dim], vec_list) )  
+
+    k_cluster_color = ['r', 'g', 'b', 'y', 'm', 'c']
+
+    for i, k_idx in enumerate(cluster_assignments):
+        # enumerate through 
+        pic = plt.scatter(x_vals[i], y_vals[i], c = k_cluster_color[int(k_idx)], s = 20 )
+
+
+def kmeans_image_arr(vec_list, x_dim, y_dim, k, cluster_assignments):
+
+    x_vals = list( map(lambda num: num[x_dim], vec_list) ) 
+    y_vals = list( map( lambda num: num[y_dim], vec_list) )  
+
+    k_cluster_color = ['r', 'g', 'b', 'y', 'm', 'c']
+
+    #k_cluster_color = np.array(k_cluster_color)
+    fig = plt.figure(1)
+    canvas = FigureCanvas(fig)
+
+    for i, k_idx in enumerate(cluster_assignments):
+        # enumerate through 
+        pic = plt.scatter(x_vals[i], y_vals[i], c = k_cluster_color[int(k_idx)], s = 20 )
+
+    fig.canvas.draw()   
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return image
+
+
+
+def image_arr_to_gif(image_arr):
+
+    # imageio.mimsave('../movie.gif', image_arr,fps=3)
+
+    kwargs_write = {'fps':1.0, 'quantizer':'nq'}
+    imageio.mimsave('./powers.gif', image_arr, fps=5)
+
+
+
 #%%
 # =============================== K MEANS ALGORITHM UNIT TESTING =============================
 
@@ -313,11 +383,16 @@ def k_means_1_iter_test():
 
         Testing that we get results we expect
     """
-    k = 2
+    k = 4
     vec_list = []
 
     for i in range(10):
-        vec = [i + 1 ,i + 1] if i % 2 else [-(i + 1), i + 1] # make a set of 2-vectors in q1 and q4
+        vec = [i + 1 ,i + 1, i +5 , i- 2] if i % 2 else [-(i + 1), i + 1, i +5 , i- 2] # make a set of 2-vectors in q1 and q4
+        np_vec = np.array(vec) # vectorize the vectors
+        vec_list.append(np_vec)
+
+    for i in range(10):
+        vec = [ -(i + 1), -(i + 1), i +5 , i- 2] if i % 2 else [(i + 1), -(i + 1), i +5 , i- 2] # make a set of 2-vectors in q1 and q4
         np_vec = np.array(vec) # vectorize the vectors
         vec_list.append(np_vec)
 
@@ -336,40 +411,70 @@ def k_means_1_iter_test():
     # print(J_clust)
     # print()
 
+    return rep_vectors, c_arr, J_clust
 
-k_means_1_iter_test()
+
 
 
 #%%
-# =============================== K MEANS VISUALIZATION =============================
 
-def visalize_kmeans(vec_list, x_dim, y_dim, k, cluster_assignments ):
-    """
-        Function that visualizes a projection of the outputs of a kmeans algorithm 
-        across two specified dimensions
-
-        inputs: 
-            1. vec_list - list/array of N-dimensional vectors
-            2. x_dim - vector dimension to use for x-axis
-            3. y_dim - vector dimension to use for the y-axis
-            4. k - number of clusters in the group
-            5. cluster_assignments - vector whose indices correspond 
-            to the indices of vec_list
-    """
-    # use map to map lambda that returns the [ith] element of a vector
-    # to get the dimension vectors
-    x_vals = list( map(lambda num: num[x_dim], vec_list) ) 
-    y_vals = list( map( lambda num: num[y_dim], vec_list) )  
+from sklearn.datasets.samples_generator import make_blobs
 
 
+def k_means_10_iter_test():
+    vec_list, vec_labels = make_blobs(n_samples= 10, centers=2, n_features=2, random_state=0) 
+    k = 5
+    J_clust_list = []
+    rep_vectors, c_arr, J_clust = k_means(k, vec_list)
 
-    # start by assigning k types of colors.
-    color_map = plt.get_cmap("gist_rainbow")
-    cNorm  = colors.Normalize(vmin=0, vmax=k-1)
-    scalarMap = mplcm.ScalarMappable(norm=cNorm, cmap=cm)
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    J_clust_list.append(J_clust)
+
+    print(" ======================= INITIAL K MEANS ============ ")
+    plt.figure()
+    visalize_kmeans(vec_list, 0, 1, k, c_arr)
+
+
+    for i in range(10):
+        k_cluster_list = create_k_clusters(rep_vectors)
+
+        rep_vectors, c_arr, J_clust = k_means(k, vec_list, k_clusters=k_cluster_list)
+
+    print(" ======================= MY K MEANS CLUSTER ============ ")
+    plt.figure()
+    visalize_kmeans(vec_list, 0, 1, k, c_arr)
+
+    print(" ======================= ACTUAL CLUSTER ============ ")
+    plt.figure()
+    visalize_kmeans(vec_list, 0, 1, k, vec_labels)
+
+
+def k_means_10_iters_anim():
+    vec_list, vec_labels = make_blobs(n_samples= 100, centers=2, n_features=2, random_state=0) 
+    k = 5
+    J_clust_list = []
+    images_arr = []
+
+    rep_vectors, c_arr, J_clust = k_means(k, vec_list)
+
+    img = kmeans_image_arr(vec_list, 0, 1, k, c_arr)
+    images_arr.append(img)
+
+    J_clust_list.append(J_clust)
+
+    for i in range(10):
+        k_cluster_list = create_k_clusters(rep_vectors)
+        rep_vectors, c_arr, J_clust = k_means(k, vec_list, k_clusters=k_cluster_list)
+        img = kmeans_image_arr(vec_list, 0, 1, k, c_arr)
+        images_arr.append(img)
+
+    image_arr_to_gif(images_arr)
 
 
 
+
+
+
+
+
+k_means_10_iters_anim()
 #%%
