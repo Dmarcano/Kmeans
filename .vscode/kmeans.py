@@ -48,8 +48,6 @@ class KCluster(object):
     def __str__(self):
         return "K Cluster: Rep vector: {}".format(str(self.rep_vector))
 
-    
-
 
 def k_means(k, vec_list, k_clusters = None ):
     """
@@ -113,7 +111,6 @@ def calculate_Jcluster(k_cluster_list, vec_list):
         J_clust += J_clust_indv
 
     return J_clust
-
 
 def choose_first_z(k, vec_list):
 
@@ -205,12 +202,33 @@ def update_rep_vectors(vec_list, k_cluster_list):
         #print(average_vec)
         k_cluster.rep_vector = average_vec
 
-
-
         
     # for each cluster have to take average of all the vectors 
 
 
+def other_init_method(k, vec_list, min_dist = 2):
+    """
+    courtesy of:
+        
+        1. take the mean of the entire vector list. have that as the main center
+        2. randomly pick vectors until their distance is at least min_dist
+    """
+    num_tries = 0
+    clusterList = []
+
+    if(type(vec_list)  == type(np.array([])) ):
+        vec_arr = vec_list
+    else:
+        vec_arr = np.array(vec_list)
+
+    center_vec = np.mean(vec_list, axis=0)
+    clusterList.append(KCluster(center_vec))
+
+    while len(clusterList < k):
+        rand_vec = np.random.choice(vec_arr) # grab a random vector
+        # check if distance of vectors is at least min_dist
+        distance = np.linalg.norm(rand_vec - center_vec) 
+        
 
 def create_k_clusters(z_vecs):
     """
@@ -423,14 +441,12 @@ from sklearn.datasets.samples_generator import make_blobs
 
 def k_means_10_iter_test():
     vec_list, vec_labels = make_blobs(n_samples= 10, centers=2, n_features=2, random_state=0) 
-    k = 5
+    k = 2
     J_clust_list = []
     rep_vectors, c_arr, J_clust = k_means(k, vec_list)
 
     J_clust_list.append(J_clust)
 
-    print(" ======================= INITIAL K MEANS ============ ")
-    plt.figure()
     visalize_kmeans(vec_list, 0, 1, k, c_arr)
 
 
@@ -447,7 +463,19 @@ def k_means_10_iter_test():
     plt.figure()
     visalize_kmeans(vec_list, 0, 1, k, vec_labels)
 
+k_means_10_iter_test()
 
+#%%
+def k_means_400_samples():
+    pass
+
+
+#%%
+def k_means_mismatch_k():
+    pass 
+
+
+#%%
 def k_means_10_iters_anim():
     vec_list, vec_labels = make_blobs(n_samples= 300, centers=3, n_features=2, random_state=0) 
     k = 3
@@ -487,10 +515,19 @@ def k_means_10_iters_anim():
 
 
 
-
-
-
-
-
 k_means_10_iters_anim()
+
+#%%
+# ================ REAL WORLD DATA =============
+
+
+#%%[markdown]
+## Results Analysis
+# * Describe any different initial conditionsyou tried to analyze your data. What worked and what didn't?
+# *  How many iterations did it take until the algorithm converged?
+# * Can you extract any meaning from the clustering results?
+# *  What value(s) of k are reasonable for your application and why?
+# * Explain any intuition behind the final clustering result. For example, if you had chosenthe handwritten digits dataset shown in the text, you would analyze whether the clustering algorithm separatedeach digit into a different clusteror not. To figure this out,look at examples from your dataset, and how they were categorized.
+
+
 #%%
