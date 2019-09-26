@@ -209,6 +209,7 @@ def update_rep_vectors(vec_list, k_cluster_list):
 def other_init_method(k, vec_list, min_dist = 2):
     """
     courtesy of:
+        http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.33.9202&rep=rep1&type=pdf
         
         1. take the mean of the entire vector list. have that as the main center
         2. randomly pick vectors until their distance is at least min_dist
@@ -269,8 +270,19 @@ def visalize_kmeans(vec_list, x_dim, y_dim, k, cluster_assignments ):
 
 def kmeans_image_arr(vec_list, x_dim, y_dim, k, cluster_assignments):
 
-    x_vals = list( map(lambda num: num[x_dim], vec_list) ) 
-    y_vals = list( map( lambda num: num[y_dim], vec_list) )  
+    """
+        creates an image array to be used in a gif.
+
+        inputs:
+            1. list of vectors
+            2. vector dimension for x axis
+            3. vector dimension for y axis
+            4. number of clusters
+            5. cluster assignment vector
+    """
+
+    x_vals = list( map(lambda num: num[x_dim], vec_list) ) # get all x axis vals
+    y_vals = list( map( lambda num: num[y_dim], vec_list) )  # get all y axis vals
 
     k_cluster_color = ['r', 'g', 'b', 'y', 'm', 'c']
 
@@ -291,9 +303,12 @@ def kmeans_image_arr(vec_list, x_dim, y_dim, k, cluster_assignments):
 
 
 def image_arr_to_gif(image_arr):
-
+    """
+        takes an array of image arrays and creates a gif with it.
+    """
     # imageio.mimsave('../movie.gif', image_arr,fps=3)
 
+    
     kwargs_write = {'fps':1.0, 'quantizer':'nq'}
     imageio.mimsave('./powers.gif', image_arr, fps=5)
 
